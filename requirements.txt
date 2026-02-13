@@ -1,0 +1,24 @@
+
+numpy
+paddlepaddle
+paddleocr
+PyMuPDF
+Pillow
+opencv-python
+torch
+torchvision
+torchaudio
+sentence-transformers
+transformers
+huggingface-hub
+faiss-cpu
+
+# LangChain stack pinned to versions compatible with paddlex/paddleocr
+langchain==0.1.16
+langchain-community==0.0.34
+langchain-core==0.1.45
+
+gradio
+rank-bm25
+langchain-openai
+openai
