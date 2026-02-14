@@ -20,11 +20,6 @@ from qa_agent import MathQAAgent
 # ---------------------------------------------------------------------------
 # Console / logging encoding (Windows-safe)
 # ---------------------------------------------------------------------------
-# Some Windows terminals use cp1252 and cannot print emoji / some Unicode
-# characters, which would normally raise UnicodeEncodeError when logging.
-# We:
-#   1. Reconfigure stdout / stderr to use UTF‑8 with a non-crashing handler.
-#   2. Ensure the log file is always written as UTF‑8.
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -77,7 +72,7 @@ class PaddleRAGApp:
             logger.info("="*60)
             
             try:
-                self.parser = PaddleMathParser(dpi=150)
+                self.parser = PaddleMathParser(dpi=150, cpu_threads=4)
                 self.retriever = HybridRetriever()
                 logger.info("System initialized successfully")
             except Exception as e:
@@ -140,7 +135,7 @@ class PaddleRAGApp:
             
             # Step 2: Index chunks for search
             progress(0.6, desc=f"🔗 Indexing {len(self.chunks)} chunks...")
-            self.retriever.clear()  # Clear previous documents
+            self.retriever.clear()
             self.retriever.add_documents(self.chunks)
             
             # Step 3: Initialize QA agent
@@ -263,20 +258,8 @@ class PaddleRAGApp:
 # Create global app instance
 app = PaddleRAGApp()
 
-# Build Gradio interface
-with gr.Blocks(
-    title="PaddleOCR Math Textbook RAG", 
-    theme=gr.themes.Soft(),
-    css="""
-        footer {visibility: hidden}
-        .stats-box {
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.9em;
-        }
-    """
-) as demo:
+# Build Gradio interface - WITHOUT theme and css in Blocks
+with gr.Blocks(title="PaddleOCR Math Textbook RAG") as demo:
     
     gr.Markdown("""
     # 📚 Mathematics Textbook Q&A with PaddleOCR
@@ -309,8 +292,7 @@ with gr.Blocks(
             )
             
             stats = gr.Markdown(
-                "**System Stats:** No data yet",
-                elem_classes=["stats-box"]
+                "**System Stats:** No data yet"
             )
             
             gr.Markdown("""
@@ -337,9 +319,8 @@ with gr.Blocks(
         with gr.Column(scale=2):
             chatbot = gr.Chatbot(
                 label="💬 Ask Questions",
-                height=500,
-                show_copy_button=True,
-                bubble_full_width=False
+                height=500
+                # show_copy_button removed - not in Gradio 4.44.1
             )
             
             question = gr.Textbox(
@@ -406,10 +387,22 @@ if __name__ == "__main__":
     logger.info("💻 CPU MODE - Python 3.10/3.11")
     logger.info("="*60)
     
+    # CORRECTED launch parameters for Gradio 4.44.1
     demo.launch(
-        share=False,
-        server_name="0.0.0.0",  # Allow external access
-        server_port=7860,
-        show_error=True,
-        show_api=False
+        share=False,           # Don't create public link
+        server_name="0.0.0.0", # Allow external connections
+        server_port=7860,      # Port to run on
+        show_error=True,       # Show errors in UI
+        # show_api removed - not in Gradio 4.44.1
+        # theme and css moved here as per warning
+        theme=gr.themes.Soft(),
+        css="""
+            footer {visibility: hidden}
+            .stats-box {
+                background: #f0f0f0;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 0.9em;
+            }
+        """
     )
